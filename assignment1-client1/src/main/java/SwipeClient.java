@@ -26,12 +26,16 @@ public class SwipeClient {
     long endTime = System.currentTimeMillis();
     long totalExecutionTime = endTime - startTime;
 
+    long throughPut = totalExecutionTime/(NUM_TASKS * 1000);
+
     // Shut down the thread pool
     threadPool.shutdown();
 
     System.out.println("Total execution time: " + totalExecutionTime + " milliseconds");
     System.out.println("Successful requests: " + Arguments.successCount.get());
     System.out.println("Failed requests: " + Arguments.failureCount.get());
+    System.out.println("Total throughput is: " + throughPut + "requests per second");
+
 
   }
 }
