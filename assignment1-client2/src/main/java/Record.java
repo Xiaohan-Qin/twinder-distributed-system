@@ -1,9 +1,16 @@
-public class Record implements Comparable<Record>{
+import java.io.Serializable;
+
+public class Record implements Comparable<Record>, Cloneable, Serializable {
+  private static final long serialVersionUID = 1L;
   private String requestType;
   private long startTime;
   private long endTime;
   private long latency;
   private int respondCode;
+
+  private static Record record = new Record();
+
+  public Record(){};
 
   public Record(String requestType, long startTime, long endTime, long latency, int respondCode) {
     this.requestType = requestType;
@@ -11,6 +18,13 @@ public class Record implements Comparable<Record>{
     this.endTime = endTime;
     this.latency = latency;
     this.respondCode = respondCode;
+  }
+
+  public static Record getRecord() {
+    try {
+      return (Record) record.clone();
+    } catch(CloneNotSupportedException ignore) {}
+    return new Record();
   }
 
   public String getRequestType() {
