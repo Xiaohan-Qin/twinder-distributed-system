@@ -3,20 +3,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SwipeClient {
-  final static private int NUM_THREADS = 300;
-  final static private int NUM_TASKS = 500;
 
   public static void main(String[] args) throws InterruptedException {
     // record start time
     long startTime = System.currentTimeMillis();
 
     // Create thread pool
-    ExecutorService threadPool = Executors.newFixedThreadPool(NUM_THREADS);
-    CountDownLatch latch = new CountDownLatch(NUM_TASKS);
+    ExecutorService threadPool = Executors.newFixedThreadPool(Constant.NUM_THREADS);
+    CountDownLatch latch = new CountDownLatch(Constant.NUM_THREADS);
 
     // Submit tasks to thread pool
-    for (int i = 0; i < NUM_TASKS; i++) {
-      threadPool.submit(new SwipeThread(latch));
+    for (int i = 0; i < Constant.NUM_THREADS; i++) {
+      threadPool.submit(new SwipeThread(latch, Constant.NUM_TASKS/Constant.NUM_THREADS));
     }
 
     // Wait for all threads to finish
@@ -26,16 +24,16 @@ public class SwipeClient {
     long endTime = System.currentTimeMillis();
     long totalExecutionTime = endTime - startTime;
 
-    long throughPut = totalExecutionTime/(NUM_TASKS * 1000);
+    long throughPut = Constant.NUM_TASKS / (totalExecutionTime / 1000);
 
     // Shut down the thread pool
     threadPool.shutdown();
 
-    System.out.println("Total execution time: " + totalExecutionTime + " milliseconds");
-    System.out.println("Successful requests: " + Arguments.successCount.get());
-    System.out.println("Failed requests: " + Arguments.failureCount.get());
-    System.out.println("Total throughput is: " + throughPut + "requests per second");
-
-
+    System.out.println(
+        "Total run time (wall time) in ms: " + totalExecutionTime + "\n"
+        + "Successful requests: " + Utils.successCount.get() + "\n"
+        + "Failed requests: " + Utils.failureCount.get() + "\n"
+        + "Total throughput in requests per second: " + throughPut
+    );
   }
 }
