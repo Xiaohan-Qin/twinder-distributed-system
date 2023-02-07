@@ -31,7 +31,7 @@ public class SwipeServlet extends HttpServlet {
     String[] urlParts = urlPath.split("/");
 
     if (urlParts.length != 2 || !(urlParts[1].equals("left") || urlParts[1].equals("right"))) {
-      response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
       response.getWriter().write("invalid url path");
       return;
     }
@@ -48,7 +48,6 @@ public class SwipeServlet extends HttpServlet {
     SwipeReqBody swipeReqBody = gson.fromJson(sb.toString(), SwipeReqBody.class);
 
     try {
-      boolean isValid = true;
       // check if swiper id is out of range
       // if swiper id can not be parsed to integer, NumberFormatException in
       // the catch clause will handle it
@@ -88,5 +87,14 @@ public class SwipeServlet extends HttpServlet {
     response.getWriter().write(sb.toString());
     response.getWriter().flush();
   }
+
+  // urlParts: ["", "left"]
+//  public boolean isValidUrl(String[] urlParts) {
+//    if (urlParts.length != 2) {
+//      return false;
+//    } else {
+//      return (urlParts[1].equals("left") || urlParts[1].equals("right"));
+//    }
+//  }
 }
 
