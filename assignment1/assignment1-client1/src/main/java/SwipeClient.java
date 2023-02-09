@@ -14,7 +14,7 @@ public class SwipeClient {
 
     // Submit tasks to thread pool
     for (int i = 0; i < Constant.NUM_THREADS; i++) {
-      threadPool.submit(new SwipeThread(latch, Constant.NUM_TASKS/Constant.NUM_THREADS));
+      threadPool.submit(new SwipeThread(latch, Constant.NUM_TASKS / Constant.NUM_THREADS));
     }
 
     // Wait for all threads to finish
@@ -30,10 +30,12 @@ public class SwipeClient {
     threadPool.shutdown();
 
     System.out.println(
-        "Total run time (wall time) in ms: " + totalExecutionTime + "\n"
-        + "Successful requests: " + Utils.successCount.get() + "\n"
-        + "Failed requests: " + Utils.failureCount.get() + "\n"
-        + "Total throughput in requests per second: " + throughPut
+        "Number of Tasks: " + Constant.NUM_TASKS + "\n"
+            + "Number of threads: " + Constant.NUM_THREADS + "\n"
+            + "Total run time (wall time) in ms: " + totalExecutionTime + "\n"
+            + "Successful requests: " + Utils.successCount.get() + "\n"
+            + "Failed requests: " + Utils.failureCount.get() + "\n"
+            + "Total throughput in requests per second: " + throughPut
     );
   }
 }
