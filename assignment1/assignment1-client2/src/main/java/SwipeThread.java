@@ -3,7 +3,6 @@ import io.swagger.client.ApiException;
 import io.swagger.client.ApiResponse;
 import io.swagger.client.api.SwipeApi;
 import io.swagger.client.model.SwipeDetails;
-import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -61,8 +60,6 @@ class SwipeThread implements Runnable {
       long startTime = System.currentTimeMillis();
       while (curTurn < Constant.RETRIES) {
         try {
-//          ApiResponse<Void> response = swipeInstance.swipeWithHttpInfo(swipeDetails, leftorright);
-//          statusCode = response.getStatusCode();
           statusCode = swipeInstance.swipeWithHttpInfo(swipeDetails, leftorright).getStatusCode();
           break;
         } catch (ApiException apiExp) {
@@ -82,8 +79,6 @@ class SwipeThread implements Runnable {
       curRecord.setEndTime(endTime);
       curRecord.setLatency(endTime-startTime);
       curRecord.setRespondCode(statusCode);
-//      Record curRecord = new Record("POST", startTime, endTime, endTime - startTime,
-//          statusCode);
       Utils.recordsQueue.add(curRecord);
       if (curTurn < Constant.RETRIES) {
         Utils.successCount.incrementAndGet();

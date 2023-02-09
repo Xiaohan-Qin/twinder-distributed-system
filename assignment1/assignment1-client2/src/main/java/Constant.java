@@ -1,6 +1,6 @@
 public class Constant {
-  public static final String SERVER_IP = "54.201.203.175";
-  public static final int NUM_THREADS = 100;
+  public static final String SERVER_IP = "34.210.37.182";
+  public static final int NUM_THREADS = 50;
   public static final int NUM_TASKS = 500000;
   public static final int SWIPER_LOWER_BOUND = 1;
   public static final int SWIPER_UPPER_BOUND = 5000;
