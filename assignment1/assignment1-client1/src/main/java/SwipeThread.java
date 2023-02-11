@@ -1,5 +1,6 @@
 import io.swagger.client.ApiClient;
 import io.swagger.client.ApiException;
+import io.swagger.client.ApiResponse;
 import io.swagger.client.api.SwipeApi;
 import io.swagger.client.model.SwipeDetails;
 import java.util.concurrent.CountDownLatch;
@@ -17,7 +18,8 @@ class SwipeThread implements Runnable {
 
   @Override
   public void run() {
-    String BASE_PATH = "http://" + Constant.SERVER_IP + ":8080/assignment1-server_war/";
+//    String BASE_PATH = "http://" + Constant.SERVER_IP + ":8080/assignment1-server_war/";
+    String BASE_PATH = "http://" + Constant.SERVER_IP + ":8080/assignment1-spring-server";
     SwipeApi swipeInstance = new SwipeApi();
     ApiClient swipeClient = swipeInstance.getApiClient();
     swipeClient.setBasePath(BASE_PATH);
