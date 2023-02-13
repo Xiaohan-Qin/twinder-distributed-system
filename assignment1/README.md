@@ -26,7 +26,7 @@ _part 1_
 - Part 1 has four parts: Constant, SwipeClint, SwipeThread, and Utils.
 - Constant stores all constant variables such as server IP and swipe request body constraints.
 - SwipeClient is the main class, it reads value from the Constant class, creates the thread pool, and submit tasks to threads.
-- SwipeThread the per client request model, itcreates the swipe details using ```ThreadLocalRandom``` and submits the POST requests to server. It also updates the total success and failure count in the process.
+- SwipeThread is the per client request model, it creates the swipe details using ```ThreadLocalRandom``` and submits the POST requests to server. It also updates the total success and failure count in the process.
 - Utils stores the global ```AtomicInteger``` variables successCount and failureCount.
 
 _Part 2_
