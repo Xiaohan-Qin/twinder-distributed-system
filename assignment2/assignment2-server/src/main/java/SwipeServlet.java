@@ -1,7 +1,7 @@
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.rabbitmq.client.*;
 import java.io.File;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -12,7 +12,7 @@ import javax.servlet.annotation.*;
 import java.io.IOException;
 import com.google.gson.Gson;
 
-@WebServlet(name = "SwipeServlet", value = "/swipe")
+@WebServlet(name = "SwipeServlet", value = "/SwipeServlet")
 public class SwipeServlet extends HttpServlet {
     private final Gson gson = new Gson();
     private final ConnectionFactory conFactory = new ConnectionFactory();
@@ -22,16 +22,17 @@ public class SwipeServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         super.init();
-        File confFile = new File(this.getClass()
-            .getClassLoader().getResource("rabbitmq.conf").getFile());
+        File confFile = new File(Objects.requireNonNull(this.getClass()
+            .getClassLoader().getResource("rabbitmq.conf")).getFile());
         try {
             Scanner cin = new Scanner(confFile);
             conFactory.setHost(cin.nextLine());
             conFactory.setPort(Integer.parseInt(cin.nextLine()));
             conFactory.setUsername(cin.nextLine());
             conFactory.setPassword(cin.nextLine());
-            Connection connection = conFactory.newConnection();
+            conFactory.setVirtualHost("myTwinderApp");
             channelPool = new LinkedBlockingQueue<>();
+            Connection connection = conFactory.newConnection();
             for(int i = 0; i < NUM_CHANNEL; i++) {
                 Channel channel = connection.createChannel();
                 channel.queueDeclare(Constant.QUEUE_NAME, false, false, false, null);
@@ -108,7 +109,11 @@ public class SwipeServlet extends HttpServlet {
             swipeReqBody.getSwiper() > Constant.SWIPER_UPPER_BOUND) {
             return false;
         }
-        return swipeReqBody.getSwipee() >= Constant.SWIPEE_LOWER_BOUND &&
-            swipeReqBody.getSwipee() <= Constant.SWIPEE_UPPER_BOUND;
+        if (swipeReqBody.getSwipee() < Constant.SWIPEE_LOWER_BOUND ||
+            swipeReqBody.getSwipee() > Constant.SWIPEE_UPPER_BOUND) {
+            return false;
+        }
+        return swipeReqBody.getComment().length() >= Constant.COMMENT_MIN_LENGTH &&
+            swipeReqBody.getComment().length() <= Constant.COMMENT_MAX_LENGTH;
     }
 }
