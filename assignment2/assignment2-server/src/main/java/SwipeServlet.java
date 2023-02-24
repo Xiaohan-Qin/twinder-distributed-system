@@ -11,12 +11,16 @@ import javax.servlet.http.*;
 import javax.servlet.annotation.*;
 import java.io.IOException;
 import com.google.gson.Gson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @WebServlet(name = "SwipeServlet", value = "/SwipeServlet")
 public class SwipeServlet extends HttpServlet {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SwipeServlet.class);
+
     private final Gson gson = new Gson();
     private final ConnectionFactory conFactory = new ConnectionFactory();
-    public final Integer NUM_CHANNEL = 10;
+    public final Integer numChannel = Constant.NUM_CHANNEL;
     private BlockingQueue<Channel> channelPool;
 
     @Override
@@ -30,14 +34,17 @@ public class SwipeServlet extends HttpServlet {
             conFactory.setPort(Integer.parseInt(cin.nextLine()));
             conFactory.setUsername(cin.nextLine());
             conFactory.setPassword(cin.nextLine());
-            conFactory.setVirtualHost("myTwinderApp");
+            conFactory.setVirtualHost(cin.nextLine());
+            final Connection connection = conFactory.newConnection();
+            System.out.println("Connect successfully");
+//            Channel channel = conFactory.newConnection().createChannel();
+//            channel.queueDeclare(Constant.QUEUE_NAME, false, false, false, null);
             channelPool = new LinkedBlockingQueue<>();
-            Connection connection = conFactory.newConnection();
-            for(int i = 0; i < NUM_CHANNEL; i++) {
+            for(int i = 0; i <numChannel; i ++) {
                 Channel channel = connection.createChannel();
                 channel.queueDeclare(Constant.QUEUE_NAME, false, false, false, null);
                 channelPool.add(channel);
-            };
+            }
         } catch (IOException | TimeoutException e) {
             e.printStackTrace();
         }
@@ -70,11 +77,17 @@ public class SwipeServlet extends HttpServlet {
         String leftOrRight = urlParts[1];
         jsonObject.addProperty("leftOrRight", leftOrRight);
         String message = gson.toJson(jsonObject);
-        SwipeReqBody swipeReqBody = gson.fromJson(message, SwipeReqBody.class);
-        // gson will raise NumberFormatException if IDs can not be parsed into integer.
-        if (!isValidReqBody(swipeReqBody)) {
+        try {
+            SwipeReqBody swipeReqBody = gson.fromJson(message, SwipeReqBody.class);
+            if (!isValidReqBody(swipeReqBody)) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write(Constant.INVALID_REQ_BODY);
+                return;
+            }
+        } catch (NumberFormatException e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().write(Constant.INVALID_REQ_BODY);
+            return;
         }
         Channel channel = null;
         try {
@@ -85,7 +98,10 @@ public class SwipeServlet extends HttpServlet {
         if (channel != null) {
             channel.basicPublish("", Constant.QUEUE_NAME, null, message.getBytes());
             response.setStatus(HttpServletResponse.SC_CREATED);
-            System.out.println("Sent " + message + " to rabbitmq");
+            LOGGER.info("Sent " + message + " to rabbitmq");
+//            LOGGER.error("This is a error test");
+//            LOGGER.debug("This is a debug test");
+//            LOGGER.warn("This is a warn test");
             response.getWriter().write("Sent " + message + " to rabbitmq");
             channelPool.add(channel);
         } else{
@@ -113,7 +129,7 @@ public class SwipeServlet extends HttpServlet {
             swipeReqBody.getSwipee() > Constant.SWIPEE_UPPER_BOUND) {
             return false;
         }
-        return swipeReqBody.getComment().length() >= Constant.COMMENT_MIN_LENGTH &&
+        return swipeReqBody.getComment() != null && swipeReqBody.getComment().length() >= Constant.COMMENT_MIN_LENGTH &&
             swipeReqBody.getComment().length() <= Constant.COMMENT_MAX_LENGTH;
     }
 }
