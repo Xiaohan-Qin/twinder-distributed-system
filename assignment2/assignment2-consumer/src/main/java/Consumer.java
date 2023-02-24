@@ -2,12 +2,7 @@ import com.google.gson.JsonObject;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-
 import java.io.*;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Scanner;
 import java.util.concurrent.*;
 
 public class Consumer {
@@ -29,6 +24,7 @@ public class Consumer {
       conFactory.setPort(Integer.parseInt(reader.readLine()));
       conFactory.setUsername(reader.readLine());
       conFactory.setPassword(reader.readLine());
+      conFactory.setVirtualHost(reader.readLine());
       setNumThreads(Integer.valueOf(reader.readLine()));
       setQueueName(reader.readLine());
       con = conFactory.newConnection();
@@ -64,16 +60,6 @@ public class Consumer {
 
   public void setConsumerUtils(ConsumerUtils consumerUtils) {
     this.consumerUtils = consumerUtils;
-  }
-
-  public static void main(String[] args) {
-    Consumer consumer = new Consumer();
-    ExecutorService pool = Executors.newFixedThreadPool(consumer.getNumThreads());
-    for (int i = 0; i < consumer.getNumThreads(); i++) {
-      pool.execute(new ConsumerThread(
-          consumer.getQueueName(), consumer.getCon(), consumer.getConsumerUtils())
-      );
-    }
   }
 }
 
