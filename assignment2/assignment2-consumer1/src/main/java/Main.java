@@ -7,7 +7,7 @@ public class Main {
     ExecutorService pool = Executors.newFixedThreadPool(consumer.getNumThreads());
     for (int i = 0; i < consumer.getNumThreads(); i++) {
       pool.execute(new ConsumerThread(
-          consumer.getQueueName(), consumer.getCon(), consumer.getConsumerUtils())
+          consumer.getConnection(), consumer.getExchangeName(), consumer.getQueueName(), consumer.getConsumerUtils())
       );
     }
   }

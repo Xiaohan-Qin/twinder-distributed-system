@@ -1,5 +1,3 @@
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,7 +10,6 @@ public class ConsumerUtils {
 
   public void processSwipeMessage(SwipeMessage message) {
     int swiperId = message.getSwiperId();
-    int swipeeId = message.getSwipeeId();
     String leftOrRight = message.getLeftOrRight();
     UserData userData = userDataMap.get(swiperId);
     if (userData == null) {
@@ -21,7 +18,6 @@ public class ConsumerUtils {
     }
     if (leftOrRight.equals("right")) {
       userData.incrementLikes();
-      userData.addLikedUserId(swipeeId);
     } else if (leftOrRight.equals("left")) {
       userData.incrementDislikes();
     }
@@ -41,13 +37,5 @@ public class ConsumerUtils {
       return userData.getNumDislikes();
     }
     return 0;
-  }
-
-  public List<Integer> getTopLikedUsersForUser(int swiperId) {
-    UserData userData = userDataMap.get(swiperId);
-    if (userData != null) {
-      return userData.getLikedUserIds();
-    }
-    return Collections.emptyList();
   }
 }
