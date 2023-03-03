@@ -2,23 +2,17 @@ CS6650 Assignment2 Report
 
 Xiaohan Qin 2/28/2023
 
-### GitHub Repo
-
----
+## GitHub Repo
 
 - [https://github.com/Xiaohan-Qin/twinder-distributed-system/tree/master/assignment2](https://github.com/Xiaohan-Qin/twinder-distributed-system/tree/master/assignment2)
 
-### RabbitMQ
-
----
+## RabbitMQ
 
 - I deployed RabbitMQ message broker on an Ubuntu EC2 instance
   following [this instruction](https://www.cherryservers.com/blog/how-to-install-and-start-using-rabbitmq-on-ubuntu-22-04)
   .
 
-### Server Design
-
----
+## Server Design
 
 - I adopted the design of server from previous assignment.
 - The main changes are in SwipeServlet class.
@@ -52,9 +46,7 @@ Xiaohan Qin 2/28/2023
   ```
 - As for the message, it should be sent by the exchange to all bounded queues!
 
-### Consumer Design
-
----
+## Consumer Design
 
 - I implemented two plain old java programs to consume massages from the queue. They are responsible
   for the following purposes when processing messages.
@@ -76,19 +68,16 @@ Xiaohan Qin 2/28/2023
 - As for consumer2, all classes except UserData are identical with consumer1. See codes for detailed
   implementation.
 
-### Load Balancer
-
----
+## Load Balancer
 
 - I created another server instance using AMI image based on my original server, and applied load
   balancing (AWS ELB) across these two servers.
 
-### Performance Comparison – Throughput & Queue Length
+## Performance Comparison – Throughput & Queue Length
 
----
 Client Config: Number of requests is **500K**. Number of threads is **100**.
 
-#### Throughput
+### Throughput
 
 - **With load balancing:** Sent requests to load balancer. Base path is: http://{Load balancer's
   DNS}:8080 /assignment2-server/. Run result from client console:
@@ -97,7 +86,7 @@ Client Config: Number of requests is **500K**. Number of threads is **100**.
   public IP}:8080 /assignment2-server/. Run result from client console:
   ![](screenshots/throughput-without-LB.png)
 
-#### RabbitMQ
+### RabbitMQ
 
 - Below are the RabbitMQ web interfaces showing the queue length while program running, where
   QueueOne is bound with consumer1, and QueueTwo is bound with consumer2. I did the tests
@@ -105,9 +94,7 @@ Client Config: Number of requests is **500K**. Number of threads is **100**.
   ![](screenshots/queue-one-length.png)
   ![](screenshots/queue-two-length.png)
 
-### Observation
-
----
+## Observation
 
 - With multiple servers load balanced, throughput is slightly enhanced - from 3521 to 3546 - but
   definitely not significant.
