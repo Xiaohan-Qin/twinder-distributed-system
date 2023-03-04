@@ -3,7 +3,7 @@ CS6650 Assignment1 Report
 Xiaohan Qin 2/9/2023
 
 
-##Server Implementation
+## Server Implementation
 
 - Implemented a regular java servlet and a spring servlet which can handle http POST request and return response as expected in [Swagger](https://app.swaggerhub.com/apis/IGORTON/Twinder/1.0.0).
 - Deployed the servlets to EC2 Tomcat. Base path are:
@@ -16,9 +16,9 @@ Xiaohan Qin 2/9/2023
     ![](screenshots/tomcat-web-interface.png)
 
 
-##Client Design
+## Client Design
 
-###part 1
+### part 1
 
 ![](screenshots/client-part1-design.png)
 
@@ -28,7 +28,7 @@ Xiaohan Qin 2/9/2023
 - SwipeThread is the per client request model, it creates the swipe details using ```ThreadLocalRandom``` and submits the POST requests to server. It also updates the total success and failure count in the process.
 - Utils stores the global ```AtomicInteger``` variables successCount and failureCount.
 
-###Part 2
+### Part 2
 
 ![](screenshots/client-part2-design.png)
 
@@ -37,7 +37,7 @@ Xiaohan Qin 2/9/2023
 - RecordUtils class imports the FileWriter and is used to write all records to csv files. It also calculates statistics such as mean, median, min and max latency.   
 
 
-###Client Outputs
+### Client Outputs
 
 Part 1 – 1 thread, 10k requests
 - Ran client part 1 with one thread and 10k requests to calculate the average request latency for future throughput estimation.
@@ -62,14 +62,14 @@ Thus part 2 throughput is **within 5%** of the results from client part 1.
 - **Mean, median, p99, max,** and **min** latency are **28.1, 28.0, 69.0, 1046.0,** and **10.0** respectively, as shown in the screenshot
 
 
-##Performance Plot
+## Performance Plot
 - I used Python ```matplotlib``` library to draw performance chart, where the x-axis is time in seconds (from 0 – wall time), and the y-axis is throughput per second, showing the number of requests completed in each second of the test.
 - Configuration for the test is 100 threads and 500k requests.
 - As the result chart shows, total execution time/wall time is 140+ seconds, and the throughput per second drops within the range of 3k – 4k, which reflects the terminal outputs from client part 2.
 ![](screenshots/performance-chart.png)
 
 
-##Spring server
+## Spring server
 - I implemented the servlet logic using spring framework.
 - Post requests are handled in SwipeController and requests are validated in SwipeReqBody using the ```validation``` library.
 - Tested it with client part 1 using 100 threads and 500k requests.
