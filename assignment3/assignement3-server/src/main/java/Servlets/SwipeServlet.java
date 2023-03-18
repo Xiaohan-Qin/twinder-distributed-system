@@ -44,7 +44,8 @@ public class SwipeServlet extends HttpServlet {
       channelPool = new LinkedBlockingQueue<>();
       for (int i = 0; i < numChannel; i++) {
         Channel channel = connection.createChannel();
-        channel.exchangeDeclare(Constant.EXCHANGE_NAME, "fanout", true); // durable exchange
+//        channel.exchangeDeclare(Constant.EXCHANGE_NAME, "fanout", true); // durable exchange
+        channel.queueDeclare(Constant.QUEUE_NAME, true, false, false, null); // durable queue
         channelPool.add(channel);
       }
     } catch (IOException | TimeoutException e) {
@@ -99,10 +100,17 @@ public class SwipeServlet extends HttpServlet {
       e.printStackTrace();
     }
     if (channel != null) {
+//      // publish persistent message to exchange
+//      channel.basicPublish(
+//          Constant.EXCHANGE_NAME,
+//          "",  // blank routing key for fanout exchange
+//          MessageProperties.PERSISTENT_BASIC,
+//          message.getBytes());
+      // publish persistent message to queue
       channel.basicPublish(
-          Constant.EXCHANGE_NAME,
-          "",  // blank routing key for fanout exchange
-          MessageProperties.PERSISTENT_BASIC,   // set message as persistent
+          "",
+          Constant.QUEUE_NAME,
+          MessageProperties.PERSISTENT_BASIC,
           message.getBytes());
       response.setStatus(HttpServletResponse.SC_CREATED);
       LOGGER.info("Sent " + message + " to rabbitmq");
