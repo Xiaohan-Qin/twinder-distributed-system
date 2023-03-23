@@ -11,6 +11,7 @@ import java.io.IOException;
 
 @WebServlet(name = "MatchesServlet", value = "/MatchesServlet")
 public class MatchesServlet extends HttpServlet {
+  //TODO: connect with database and gain access to table
   private Hashtable<String, List<String>> matchTable;
 
   public void init() throws ServletException {

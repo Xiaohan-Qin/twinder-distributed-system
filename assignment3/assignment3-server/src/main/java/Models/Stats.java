@@ -1,10 +1,10 @@
 package Models;
 
-public class LikesAndDislikes {
+public class Stats {
   private int likes;
   private int dislikes;
 
-  public LikesAndDislikes(int likes, int dislikes) {
+  public Stats(int likes, int dislikes) {
     this.likes = likes;
     this.dislikes = dislikes;
   }
@@ -27,9 +27,6 @@ public class LikesAndDislikes {
 
   @Override
   public java.lang.String toString() {
-    return "LikesAndDislikes{" +
-        "likes=" + likes +
-        ", dislikes=" + dislikes +
-        '}';
+    return "Stats{" + "likes=" + likes + ", dislikes=" + dislikes + '}';
   }
 }
