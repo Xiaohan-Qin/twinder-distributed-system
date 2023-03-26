@@ -4,50 +4,45 @@ import Constants.Constant;
 import Models.Stats;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Hashtable;
-import java.util.List;
+import java.sql.*;
 import java.util.Objects;
 import java.util.Scanner;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
 import java.io.IOException;
-import org.postgresql.ds.PGSimpleDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @WebServlet(name = "StatsServlet", value = "/StatsServlet")
 public class StatsServlet extends HttpServlet {
-//  private Hashtable<String, LikesAndDislikes> matchTable;
-//  private final LikesAndDislikes likesAndDislikes = new LikesAndDislikes(5, 0);
 
   private static final Logger LOGGER = LoggerFactory.getLogger(StatsServlet.class);
-  private final PGSimpleDataSource dataSource = new PGSimpleDataSource();
   private Connection connection;
 
     public void init() throws ServletException {
       super.init();
+      try {
+        Class.forName("org.postgresql.Driver");
+      } catch (ClassNotFoundException e) {
+        LOGGER.warn(e.toString());
+      }
       File confFile = new File(Objects.requireNonNull(this.getClass()
-          .getClassLoader().getResource("cockroachdb.conf")).getFile());
+          .getClassLoader().getResource("postgresql.conf")).getFile());
       try {
         Scanner cin = new Scanner(confFile);
-        dataSource.setServerNames(new String[] {cin.nextLine()});
-        dataSource.setPortNumbers(new int[] {Integer.parseInt(cin.nextLine())});
-        dataSource.setDatabaseName(cin.nextLine());
-        dataSource.setUser(cin.nextLine());
-        dataSource.setPassword(cin.nextLine());
-        this.connection = dataSource.getConnection();
-        LOGGER.info("connect to cockroachDB successfully");
+        String hostname = cin.nextLine();
+        String port = cin.nextLine();
+        String userName = cin.nextLine();
+        String password = cin.nextLine();
+        String dbName = cin.nextLine();
+        String jdbcUrl = "jdbc:postgresql://" + hostname + ":" + port + "/" + dbName + "?user=" + userName + "&password=" + password;
+        LOGGER.trace("Getting remote connection with connection string from environment variables.");
+        this.connection = DriverManager.getConnection(jdbcUrl);
+        LOGGER.info("Remote database connection successful.");
       } catch (FileNotFoundException | SQLException e) {
-        e.printStackTrace();
+        LOGGER.warn(e.toString());
       }
-
-//      matchTable = new Hashtable<String, LikesAndDislikes>();
-//      matchTable.put("1", likesAndDislikes);
     }
 
     @Override
@@ -68,13 +63,13 @@ public class StatsServlet extends HttpServlet {
       // request url validation completed
       int userId = Integer.parseInt(urlParts[1]);
       try {
-        PreparedStatement stmt = connection.prepareStatement(
-            "SELECT num_like, num_dislike FROM user_data WHERE user_id = ?");
+        String queryString = "SELECT num_likes, num_dislikes FROM users.user_data WHERE userid = ?";
+        PreparedStatement stmt = connection.prepareStatement(queryString);
         stmt.setInt(1, userId);
         ResultSet rs = stmt.executeQuery();
         if (rs.next()) {
-          int numLike = rs.getInt("num_like");
-          int numDislike = rs.getInt("num_dislike");
+          int numLike = rs.getInt("num_likes");
+          int numDislike = rs.getInt("num_dislikes");
           Stats stats = new Stats(numLike, numDislike);
           LOGGER.info("User stats for user " + userId + ": " + stats);
           response.setContentType("text/plain");
@@ -85,20 +80,9 @@ public class StatsServlet extends HttpServlet {
           response.getWriter().write(Constant.USER_NOT_FOUND);
         }
       } catch (SQLException e) {
-        e.printStackTrace();
+        LOGGER.warn(e.toString());
         response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Constant.DB_ERROR);
       }
-
-
-//      boolean isValidUserId = matchTable.containsKey(userId);
-//      if (isValidUserId) {
-//        LikesAndDislikes likesAndDislikes = matchTable.get(userId);
-//        response.setStatus(HttpServletResponse.SC_OK);
-//        response.getWriter().write(likesAndDislikes.toString());
-//      } else {
-//        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-//        response.getWriter().write(Constant.USER_NOT_FOUND);
-//      }
     }
 
   /*

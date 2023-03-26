@@ -1,57 +1,48 @@
 package Servlets;
 
 import Constants.Constant;
-import Models.Stats;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.sql.Array;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
+import java.sql.*;
 import java.util.Arrays;
-import java.util.Hashtable;
-import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
 import java.io.IOException;
-import org.postgresql.ds.PGSimpleDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @WebServlet(name = "MatchesServlet", value = "/MatchesServlet")
 public class MatchesServlet extends HttpServlet {
-//  private Hashtable<String, List<String>> matchTable;
   private static final Logger LOGGER = LoggerFactory.getLogger(MatchesServlet.class);
-  private final PGSimpleDataSource dataSource = new PGSimpleDataSource();
   private Connection connection;
 
 
   public void init() throws ServletException {
     super.init();
+    try {
+      Class.forName("org.postgresql.Driver");
+    } catch (ClassNotFoundException e) {
+      LOGGER.warn(e.toString());
+    }
     File confFile = new File(Objects.requireNonNull(this.getClass()
-        .getClassLoader().getResource("cockroachdb.conf")).getFile());
+        .getClassLoader().getResource("postgresql.conf")).getFile());
     try {
       Scanner cin = new Scanner(confFile);
-      dataSource.setServerNames(new String[] {cin.nextLine()});
-      dataSource.setPortNumbers(new int[] {Integer.parseInt(cin.nextLine())});
-      dataSource.setDatabaseName(cin.nextLine());
-      dataSource.setUser(cin.nextLine());
-      dataSource.setPassword(cin.nextLine());
-      this.connection = dataSource.getConnection();
-      LOGGER.info("connect to cockroachDB successfully");
+      String hostname = cin.nextLine();
+      String port = cin.nextLine();
+      String userName = cin.nextLine();
+      String password = cin.nextLine();
+      String dbName = cin.nextLine();
+      String jdbcUrl = "jdbc:postgresql://" + hostname + ":" + port + "/" + dbName + "?user=" + userName + "&password=" + password;
+      LOGGER.trace("Getting remote connection with connection string from environment variables.");
+      this.connection = DriverManager.getConnection(jdbcUrl);
+      LOGGER.info("Remote database connection successful.");
     } catch (FileNotFoundException | SQLException e) {
-      e.printStackTrace();
+      LOGGER.warn(e.toString());
     }
-
-//    matchTable = new Hashtable<String, List<String>>();
-//    matchTable.put("1", new ArrayList<String>());
-//    matchTable.get("1").add("123");
-//    matchTable.get("1").add("256");
   }
 
   @Override
@@ -73,8 +64,8 @@ public class MatchesServlet extends HttpServlet {
     // request url validation completed
     int userId = Integer.parseInt(urlParts[1]);
     try {
-      PreparedStatement stmt = connection.prepareStatement(
-          "SELECT matched_users FROM user_data WHERE user_id = ?");
+      String queryString = "SELECT matched_users FROM users.user_data WHERE userid = ?";
+      PreparedStatement stmt = connection.prepareStatement(queryString);
       stmt.setInt(1, userId);
       ResultSet rs = stmt.executeQuery();
       if (rs.next()) {
@@ -92,17 +83,6 @@ public class MatchesServlet extends HttpServlet {
       e.printStackTrace();
       response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Constant.DB_ERROR);
     }
-
-//    String userId = urlParts[1];
-//    boolean isValidUserId = matchTable.containsKey(userId);
-//    if (isValidUserId) {
-//      List<String> matches = matchTable.get(userId);
-//      response.setStatus(HttpServletResponse.SC_OK);
-//      response.getWriter().write(String.valueOf(matches));
-//    } else {
-//      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-//      response.getWriter().write(Constant.USER_NOT_FOUND);
-//    }
   }
 
   /*
