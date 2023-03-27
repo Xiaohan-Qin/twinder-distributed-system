@@ -1,12 +1,9 @@
 package Servlets;
 
 import Constants.Constant;
-import java.io.File;
-import java.io.FileNotFoundException;
+import Utils.DatabaseConnectionPool;
 import java.sql.*;
 import java.util.Arrays;
-import java.util.Objects;
-import java.util.Scanner;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
@@ -23,30 +20,14 @@ public class MatchesServlet extends HttpServlet {
   public void init() throws ServletException {
     super.init();
     try {
-      Class.forName("org.postgresql.Driver");
-    } catch (ClassNotFoundException e) {
-      LOGGER.warn(e.toString());
-    }
-    File confFile = new File(Objects.requireNonNull(this.getClass()
-        .getClassLoader().getResource("postgresql.conf")).getFile());
-    try {
-      Scanner cin = new Scanner(confFile);
-      String hostname = cin.nextLine();
-      String port = cin.nextLine();
-      String userName = cin.nextLine();
-      String password = cin.nextLine();
-      String dbName = cin.nextLine();
-      String jdbcUrl = "jdbc:postgresql://" + hostname + ":" + port + "/" + dbName + "?user=" + userName + "&password=" + password;
-      LOGGER.trace("Getting remote connection with connection string from environment variables.");
-      this.connection = DriverManager.getConnection(jdbcUrl);
-      LOGGER.info("Remote database connection successful.");
-    } catch (FileNotFoundException | SQLException e) {
+      connection = DatabaseConnectionPool.getConnection();
+    } catch (SQLException e) {
       LOGGER.warn(e.toString());
     }
   }
 
   @Override
-  protected void doGet(HttpServletRequest request, HttpServletResponse response)
+  protected void doGet (HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     response.setContentType(Constant.CONTENT_TYPE);
     String urlPath = request.getPathInfo();  //urlPath "/{userID}"
@@ -80,7 +61,7 @@ public class MatchesServlet extends HttpServlet {
         response.getWriter().write(Constant.USER_NOT_FOUND);
       }
     } catch (SQLException e) {
-      e.printStackTrace();
+      LOGGER.warn(e.toString());
       response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Constant.DB_ERROR);
     }
   }

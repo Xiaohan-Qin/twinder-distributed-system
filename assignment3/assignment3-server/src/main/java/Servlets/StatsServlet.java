@@ -1,12 +1,9 @@
 package Servlets;
 
 import Constants.Constant;
+import Utils.DatabaseConnectionPool;
 import Models.Stats;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.sql.*;
-import java.util.Objects;
-import java.util.Scanner;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
@@ -23,24 +20,8 @@ public class StatsServlet extends HttpServlet {
     public void init() throws ServletException {
       super.init();
       try {
-        Class.forName("org.postgresql.Driver");
-      } catch (ClassNotFoundException e) {
-        LOGGER.warn(e.toString());
-      }
-      File confFile = new File(Objects.requireNonNull(this.getClass()
-          .getClassLoader().getResource("postgresql.conf")).getFile());
-      try {
-        Scanner cin = new Scanner(confFile);
-        String hostname = cin.nextLine();
-        String port = cin.nextLine();
-        String userName = cin.nextLine();
-        String password = cin.nextLine();
-        String dbName = cin.nextLine();
-        String jdbcUrl = "jdbc:postgresql://" + hostname + ":" + port + "/" + dbName + "?user=" + userName + "&password=" + password;
-        LOGGER.trace("Getting remote connection with connection string from environment variables.");
-        this.connection = DriverManager.getConnection(jdbcUrl);
-        LOGGER.info("Remote database connection successful.");
-      } catch (FileNotFoundException | SQLException e) {
+        connection = DatabaseConnectionPool.getConnection();
+      } catch (SQLException e) {
         LOGGER.warn(e.toString());
       }
     }
