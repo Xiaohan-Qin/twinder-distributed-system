@@ -8,7 +8,7 @@ public class Main {
     ExecutorService pool = Executors.newFixedThreadPool(consumer.getNumThreads());
     for (int i = 0; i < consumer.getNumThreads(); i++) {
       pool.execute(new ConsumerThread(
-          consumer.getConnection(), consumer.getQueueName(), consumer.getConsumerUtils())
+          consumer.getRabbitmqConnection(), consumer.getQueueName(), consumer.getConsumerUtils())
       );
     }
   }
