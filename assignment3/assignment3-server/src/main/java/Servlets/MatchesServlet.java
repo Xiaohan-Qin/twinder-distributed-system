@@ -1,7 +1,7 @@
 package Servlets;
 
 import Constants.Constant;
-import Utils.DatabaseConnectionPool;
+import ConnectionManagers.DatabaseConnectionPool;
 import java.sql.*;
 import java.util.Arrays;
 import javax.servlet.*;

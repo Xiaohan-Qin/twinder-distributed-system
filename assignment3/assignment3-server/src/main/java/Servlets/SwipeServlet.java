@@ -1,4 +1,5 @@
 package Servlets;
+import ConnectionManagers.RabbitmqConnectionManager;
 import Constants.Constant;
 import Models.SwipeReqBody;
 
@@ -23,34 +24,15 @@ public class SwipeServlet extends HttpServlet {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SwipeServlet.class);
   private final Gson gson = new Gson();
-  private final ConnectionFactory conFactory = new ConnectionFactory();
   public final Integer numChannel = Constant.NUM_CHANNEL;
   private BlockingQueue<Channel> channelPool;
+
 
   @Override
   public void init() throws ServletException {
     super.init();
-    File confFile = new File(Objects.requireNonNull(this.getClass()
-        .getClassLoader().getResource("rabbitmq.conf")).getFile());
-    try {
-      Scanner cin = new Scanner(confFile);
-      conFactory.setHost(cin.nextLine());
-      conFactory.setPort(Integer.parseInt(cin.nextLine()));
-      conFactory.setUsername(cin.nextLine());
-      conFactory.setPassword(cin.nextLine());
-      conFactory.setVirtualHost(cin.nextLine());
-      final Connection connection = conFactory.newConnection();
-      LOGGER.info("Connect to rabbitMQ successfully");
-      channelPool = new LinkedBlockingQueue<>();
-      for (int i = 0; i < numChannel; i++) {
-        Channel channel = connection.createChannel();
-//        channel.exchangeDeclare(Constant.EXCHANGE_NAME, "fanout", true); // durable exchange
-        channel.queueDeclare(Constant.QUEUE_NAME, true, false, false, null); // durable queue
-        channelPool.add(channel);
-      }
-    } catch (IOException | TimeoutException e) {
-      e.printStackTrace();
-    }
+    RabbitmqConnectionManager rabbitmqConnectionManager = new RabbitmqConnectionManager();
+    channelPool = rabbitmqConnectionManager.createChannelPool(numChannel);
   }
 
 
@@ -72,6 +54,7 @@ public class SwipeServlet extends HttpServlet {
       response.getWriter().write(Constant.INVALID_PARAMS);
       return;
     }
+    // include leftOrRight into the message and validate the constraints of request
     StringBuilder payload = new StringBuilder();
     String line;
     while ((line = request.getReader().readLine()) != null) {
@@ -93,6 +76,7 @@ public class SwipeServlet extends HttpServlet {
       response.getWriter().write(Constant.INVALID_REQ_BODY);
       return;
     }
+    // send to rabbitMQ
     Channel channel = null;
     try {
       channel = channelPool.take();
@@ -100,13 +84,6 @@ public class SwipeServlet extends HttpServlet {
       e.printStackTrace();
     }
     if (channel != null) {
-//      // publish persistent message to exchange
-//      channel.basicPublish(
-//          Constant.EXCHANGE_NAME,
-//          "",  // blank routing key for fanout exchange
-//          MessageProperties.PERSISTENT_BASIC,
-//          message.getBytes());
-      // publish persistent message to queue
       channel.basicPublish(
           "",
           Constant.QUEUE_NAME,
@@ -114,9 +91,6 @@ public class SwipeServlet extends HttpServlet {
           message.getBytes());
       response.setStatus(HttpServletResponse.SC_CREATED);
       LOGGER.info("Sent " + message + " to rabbitmq");
-//            LOGGER.error("This is a error test");
-//            LOGGER.debug("This is a debug test");
-//            LOGGER.warn("This is a warn test");
       response.getWriter().write("Sent " + message + " to rabbitmq");
       channelPool.add(channel);
     } else {
