@@ -1,9 +1,5 @@
-import ConnectionManagers.DatabaseConnectionManager;
 import ConnectionManagers.RabbitMQConnectionManager;
-import ConnectionManagers.DatabaseConnectionPool;
 import com.rabbitmq.client.Connection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 public class Consumer {
