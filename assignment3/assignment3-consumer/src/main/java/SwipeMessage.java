@@ -1,6 +1,10 @@
+import com.google.gson.annotations.SerializedName;
+
 public class SwipeMessage {
 
+  @SerializedName(value="swiperId",alternate = {"swiper"})
   private int swiperId;
+  @SerializedName(value="swipeeId",alternate = {"swipee"})
   private int swipeeId;
   private String comment;
   private String leftOrRight;
