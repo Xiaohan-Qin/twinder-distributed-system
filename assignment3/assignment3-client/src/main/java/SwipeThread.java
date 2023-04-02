@@ -4,9 +4,12 @@ import io.swagger.client.api.SwipeApi;
 import io.swagger.client.model.SwipeDetails;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class SwipeThread implements Runnable {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(SwipeThread.class);
   private final CountDownLatch latch;
   private final int numRequests;
 
@@ -17,7 +20,7 @@ class SwipeThread implements Runnable {
 
   @Override
   public void run() {
-    String BASE_PATH = "http://" + Constant.SERVER_IP + ":8080/assignment3_server_war_exploded/";
+    String BASE_PATH = "http://" + Constant.SERVER_IP + ":8080/assignment3-server/";
     SwipeApi swipeInstance = new SwipeApi();
     ApiClient swipeClient = swipeInstance.getApiClient();
     swipeClient.setBasePath(BASE_PATH);
@@ -52,19 +55,32 @@ class SwipeThread implements Runnable {
 
       // execute post requests
       int curTurn = 0;
+      int statusCode = 0;
+      long startTime = System.currentTimeMillis();
       while (curTurn < Constant.RETRIES) {
         try {
-          swipeInstance.swipe(swipeDetails, leftorright);
+          statusCode = swipeInstance.swipeWithHttpInfo(swipeDetails, leftorright).getStatusCode();
+          LOGGER.info("Post request" + i + " succeeds");
           break;
-        } catch (ApiException e) {
+        } catch (ApiException apiExp) {
           curTurn++;
+          statusCode = apiExp.getCode();
+          LOGGER.warn(apiExp.getMessage());
           try {
             Thread.sleep(5);
           } catch (InterruptedException ex) {
-            ex.printStackTrace();
+            LOGGER.warn(ex.getMessage());
           }
         }
       }
+      long endTime = System.currentTimeMillis();
+      Record curRecord= Record.getRecord();
+      curRecord.setRequestType("POST");
+      curRecord.setStartTime(startTime);
+      curRecord.setEndTime(endTime);
+      curRecord.setLatency(endTime-startTime);
+      curRecord.setRespondCode(statusCode);
+      Utils.postRecordsQueue.add(curRecord);
       if (curTurn < Constant.RETRIES) {
         Utils.SWIPE_SUCCESS_COUNT.incrementAndGet();
       } else {
