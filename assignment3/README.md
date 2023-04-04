@@ -31,7 +31,23 @@ message broker, a consumer, a database, and a client application.
 - I created a DatabaseConnectionPool class and a RabbitmqConnectionManager class to capsulize any
   connection events, such as getting a db connection and creating a RabbitMQ channel pool of given
   size to make the server more efficient and scalable. Both classes use ConcurrentLinkedQueue to
-  store ready-to-use connections.
+  store ready-to-use connections. Below is an example from DatabaseConnectionPool class:
+  ```
+   public static Connection getConnection() throws SQLException {
+      if (dataSource == null) {
+        dataSource = new PGConnectionPoolDataSource();
+        readProperties();
+      }
+      if (connectionQueue.isEmpty()) {
+        for (int i = 0; i < 3; i ++) {
+          connectionQueue.add(dataSource.getConnection());
+        }
+      }
+      Connection connection = connectionQueue.poll();
+      connectionQueue.add(connection);
+      return connection;
+    }
+  ```
 - The SwipeReqBody class is used to verify the POST request body before sending it to the broker.
 - The Stats class is used by the StatsServlet to log http response from GET requests as an object.
 - Server is deployed to tomcat EC2 instance, with the base path being http://{Server's public IP}

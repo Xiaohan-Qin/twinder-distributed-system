@@ -3,6 +3,8 @@ package ConnectionManagers;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import org.postgresql.ds.PGConnectionPoolDataSource;
 
 import java.sql.Connection;
@@ -13,6 +15,7 @@ import org.slf4j.LoggerFactory;
 public class DatabaseConnectionPool {
   private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConnectionPool.class);
   private static  PGConnectionPoolDataSource dataSource;
+  private static final Queue<Connection> connectionQueue = new ConcurrentLinkedQueue<>();
 
   private static void readProperties() {
     Properties props = new Properties();
@@ -37,6 +40,13 @@ public class DatabaseConnectionPool {
       dataSource = new PGConnectionPoolDataSource();
       readProperties();
     }
-    return dataSource.getConnection();
+    if (connectionQueue.isEmpty()) {
+      for (int i = 0; i < 3; i ++) {
+        connectionQueue.add(dataSource.getConnection());
+      }
+    }
+    Connection connection = connectionQueue.poll();
+    connectionQueue.add(connection);
+    return connection;
   }
 }
