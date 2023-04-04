@@ -36,20 +36,21 @@ public class GetThread implements Runnable {
           + Constant.SWIPER_LOWER_BOUND;
       String userString = Integer.toString(userId);
       long startTime = System.currentTimeMillis();
+      long endTime;
       int statusCode = -1;
       try {
         URL url = new URL(BASE_PATH + userString + "/");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("GET");
         statusCode = connection.getResponseCode();
+        endTime = System.currentTimeMillis();
         Utils.GET_SUCCESS_COUNT.incrementAndGet();
-        LOGGER.info("GET request" + i + " succeeded");
-        Thread.sleep(200); // send 5 requests per second
+//        LOGGER.info(Thread.currentThread().getId() + " - GET request " + i + " succeeds");
       } catch (Exception e) {
-        LOGGER.warn("GET request" + i + " failed: " + e.getMessage());
+        endTime = System.currentTimeMillis();
         Utils.GET_FAILURE_COUNT.incrementAndGet();
+//        LOGGER.warn(Thread.currentThread().getId() + " - GET request " + i + " failed");
       }
-      long endTime = System.currentTimeMillis();
       Record curRecord= Record.getRecord();
       curRecord.setRequestType("GET");
       curRecord.setStartTime(startTime);
@@ -57,6 +58,11 @@ public class GetThread implements Runnable {
       curRecord.setLatency(endTime-startTime);
       curRecord.setRespondCode(statusCode);
       Utils.getRecordsQueue.add(curRecord);
+      try {
+        Thread.sleep(200); // send 5 requests per second
+      } catch (InterruptedException ignore){
+        return;
+      }
     }
     this.latch.countDown();
   }
