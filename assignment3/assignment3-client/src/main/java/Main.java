@@ -2,7 +2,6 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,8 +21,6 @@ public class Main {
       postPool.submit(new SwipeThread(postLatch, numPostTasks / numPostThreads));
       LOGGER.info("post thread " + i + " started");
     }
-    // Wait for all post threads to start
-    postLatch.await();
     // start get thread
     ExecutorService getPool = Executors.newFixedThreadPool(numGetThreads);
     CountDownLatch getLatch = new CountDownLatch(numGetThreads);
@@ -31,19 +28,18 @@ public class Main {
       getPool.submit(new GetThread(getLatch, numGetTasks / numGetThreads));
       LOGGER.info("get thread " + i + " started");
     }
-    // Wait for all posting threads to finish
+    // Wait for all post threads to finish
+    postLatch.await();
     postPool.shutdown();
     LOGGER.info("Post threads finished");
-
     // Signal the get threads to stop
-    getLatch.countDown();
     getPool.shutdownNow();
-    LOGGER.info("Get thread terminated");
+    LOGGER.info("Get thread terminated \n");
 
     long endTime = System.currentTimeMillis();
     long totalExecutionTime = endTime - startTime;
     int numExecutedGetTasks = Utils.GET_FAILURE_COUNT.get() + Utils.GET_SUCCESS_COUNT.get();
-    long throughPut = (numExecutedGetTasks + numPostTasks) / (totalExecutionTime);
+    long throughPut = (numExecutedGetTasks + numPostTasks) / (totalExecutionTime / 1000);
     System.out.println(
             "Successful post requests: " + Utils.SWIPE_SUCCESS_COUNT.get() + "\n"
             + "Failed post requests: " + Utils.SWIPE_FAILURE_COUNT.get() + "\n"
@@ -57,7 +53,7 @@ public class Main {
     RecordUtils getRecordUtil = new RecordUtils("./res/records/"
         + "get" + "_" + numGetThreads + "_" + numExecutedGetTasks + ".csv");
     postRecordUtil.outputStatistics("POST", Utils.postRecordsQueue);
-    getRecordUtil.outputStatistics("GET", Utils.postRecordsQueue);
+    getRecordUtil.outputStatistics("GET", Utils.getRecordsQueue);
   }
 }
 
