@@ -4,9 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RecordUtils {
   private final FileWriter csvWriter;
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(RecordUtils.class);
 
   public RecordUtils(String filePath) throws IOException {
     this.csvWriter = new FileWriter(filePath);
@@ -34,7 +38,7 @@ public class RecordUtils {
     }
     this.csvWriter.flush();
     double meanLatency = sumLatency / records.size();
-    System.out.println(
+    LOGGER.info(
         "Request type: " + requestType + "\n"
         + "Mean response time: " + meanLatency + "\n"
         + "Median response time: " + medianLatency + "\n"
