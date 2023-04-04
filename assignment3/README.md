@@ -88,7 +88,7 @@ message broker, a consumer, a database, and a client application.
   called user\_data.
 - The user\_data table has 5 columns: **userid (unique int), num\_likes (int), num\_dislikes (int),
   matched\_users (int[]), and id (int primary key)**.
-- The following screenshots shows part of the user\_data table. After inserting, it has 51 rows in
+- The following screenshots shows part of the user\_data table. After inserting, it has 5001 rows in
   total, as the range of swiperID is 0-5000, meaning each swiper has its own row in the table.
 
   ![](screenshots/db-data.png)
@@ -114,7 +114,7 @@ Here is a screenshot showing the client and the consumer program running.
 Time to see the console output! The first half of the output shows the overall statistics of the client program. It includes
 the total number of successful POST requests, the total number of successful GET requests, the wall
 time, and the throughput. The following screesnhot shows that the client sends 500k successful post
-requests and 640 successful get requests to the server. Throughput is **3299** requests per second,
+requests and 640 successful get requests to the server. Throughput is **3229** requests per second,
 which is calculated by dividing the total number of requests (500640) by the wall time (155.189s)
 . 
 
