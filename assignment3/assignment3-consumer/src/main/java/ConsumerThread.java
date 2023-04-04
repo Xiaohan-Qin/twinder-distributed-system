@@ -30,10 +30,10 @@ public class ConsumerThread implements Runnable {
       final DeliverCallback deliverCallback = (consumerTag, delivery)-> {
         String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
         SwipeMessage swipeMessage = gson.fromJson(message, SwipeMessage.class);
-        consumerUtils.processSwipeMessage(swipeMessage);
-        LOGGER.info(Thread.currentThread().getId() + " - thread sent " + message + " to database");
         channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
         LOGGER.info(Thread.currentThread().getId() + " - thread acknowledged " + message);
+        consumerUtils.processSwipeMessage(swipeMessage);
+        LOGGER.info(Thread.currentThread().getId() + " - thread sent " + message + " to database");
       };
       channel.basicConsume(this.queueName, false ,deliverCallback, (consumerTag) -> {});
     } catch (IOException e) {
