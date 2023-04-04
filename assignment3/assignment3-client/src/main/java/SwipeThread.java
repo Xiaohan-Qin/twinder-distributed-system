@@ -28,14 +28,14 @@ class SwipeThread implements Runnable {
     for (int i = 0; i < numRequests; i++) {
       // Generate request body
       int swiperId =
-          ThreadLocalRandom.current().nextInt(Constant.SWIPER_UPPER_BOUND + 1)
+          ThreadLocalRandom.current().nextInt(Constant.SWIPER_UPPER_BOUND)
               + Constant.SWIPER_LOWER_BOUND;
       String swiperString = Integer.toString(swiperId);
       int swipeeId =
-          ThreadLocalRandom.current().nextInt(Constant.SWIPEE_UPPER_BOUND + 1)
+          ThreadLocalRandom.current().nextInt(Constant.SWIPEE_UPPER_BOUND)
               + Constant.SWIPEE_LOWER_BOUND;
       String swipeeString = Integer.toString(swipeeId);
-      int randomLength = ThreadLocalRandom.current().nextInt(Constant.COMMENT_MAX_LENGTH + 1) + 1;
+      int randomLength = ThreadLocalRandom.current().nextInt(Constant.COMMENT_MAX_LENGTH) + 1;
       StringBuilder sb = new StringBuilder();
       for (int j = 0; j < randomLength; j++) {
         sb.append((char) ('a' + ThreadLocalRandom.current().nextInt(26)));
@@ -60,16 +60,17 @@ class SwipeThread implements Runnable {
       while (curTurn < Constant.RETRIES) {
         try {
           statusCode = swipeInstance.swipeWithHttpInfo(swipeDetails, leftorright).getStatusCode();
-          LOGGER.info("Post request" + i + " succeeds");
+//          LOGGER.info(Thread.currentThread().getId() + " - POST request " + i + " succeeds");
           break;
         } catch (ApiException apiExp) {
           curTurn++;
           statusCode = apiExp.getCode();
-          LOGGER.warn(apiExp.getMessage());
+          LOGGER.warn("Code: "+ statusCode + ", Message: " +apiExp.getMessage());
+          LOGGER.warn("Request body: " + swipeDetails);
           try {
             Thread.sleep(5);
-          } catch (InterruptedException ex) {
-            LOGGER.warn(ex.getMessage());
+          } catch (InterruptedException ignore) {
+            return;
           }
         }
       }
