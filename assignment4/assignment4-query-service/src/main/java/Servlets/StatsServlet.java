@@ -3,16 +3,16 @@ package Servlets;
 import Constants.Constant;
 import ConnectionManagers.DynamoDBConnectionManager;
 import Models.Stats;
-import javax.servlet.annotation.*;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import java.util.HashMap;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
-import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 
 import javax.servlet.ServletException;
+import javax.servlet.annotation.*;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,7 +22,7 @@ import java.util.Map;
 public class StatsServlet extends HttpServlet {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(StatsServlet.class);
-  private DynamoDbClient dynamoDbClient;
+  private AmazonDynamoDB dynamoDbClient;
 
   public void init() throws ServletException {
     super.init();
@@ -47,22 +47,23 @@ public class StatsServlet extends HttpServlet {
     }
     // request url validation completed
     int userId = Integer.parseInt(urlParts[1]);
-
     try {
-      GetItemRequest getItemRequest = GetItemRequest.builder()
-          .tableName("user_data_denormalized")
-          .key(Map.of("userid", AttributeValue.builder().n(String.valueOf(userId)).build()))
-          .build();
+      Map<String, AttributeValue> key = new HashMap<>();
+      key.put("userid", new AttributeValue().withN(String.valueOf(userId)));
 
-      GetItemResponse getItemResponse = dynamoDbClient.getItem(getItemRequest);
+      GetItemRequest getItemRequest = new GetItemRequest()
+          .withTableName("user_data_denormalized")
+          .withKey(key);
 
-      if (!getItemResponse.item().isEmpty()) {
-        AttributeValue numLikesValue = getItemResponse.item().get("num_likes");
-        AttributeValue numDislikesValue = getItemResponse.item().get("num_dislikes");
+      Map<String, AttributeValue> returnedItem = dynamoDbClient.getItem(getItemRequest).getItem();
+
+      if (returnedItem != null) {
+        AttributeValue numLikesValue = returnedItem.get("num_likes");
+        AttributeValue numDislikesValue = returnedItem.get("num_dislikes");
 
         if (numLikesValue != null && numDislikesValue != null) {
-          int numLikes = Integer.parseInt(numLikesValue.n());
-          int numDislikes = Integer.parseInt(numDislikesValue.n());
+          int numLikes = Integer.parseInt(numLikesValue.getN());
+          int numDislikes = Integer.parseInt(numDislikesValue.getN());
           Stats stats = new Stats(numLikes, numDislikes);
           LOGGER.info("User stats for user " + userId + ": " + stats);
           response.setContentType("text/plain");

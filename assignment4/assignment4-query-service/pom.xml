@@ -47,11 +47,17 @@
       <artifactId>postgresql</artifactId>
       <version>42.5.4</version>
     </dependency>
-    <!-- Add the AWS SDK for Java v2 with the DynamoDB module -->
+    <!-- AWS SDK for Java -->
     <dependency>
-      <groupId>software.amazon.awssdk</groupId>
-      <artifactId>dynamodb</artifactId>
-      <version>2.20.42</version>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk</artifactId>
+      <version>1.12.429</version>
+    </dependency>
+    <!-- AWS SDK for Java - DynamoDB -->
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-dynamodb</artifactId>
+      <version>1.12.429</version>
     </dependency>
   </dependencies>
 
