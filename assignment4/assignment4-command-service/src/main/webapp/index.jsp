@@ -8,7 +8,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
 <head>
-    <title>CS6650 HW4</title>
+    <title>Twinder Command Service</title>
 </head>
 <body>
 Welcome to the Twinder application
