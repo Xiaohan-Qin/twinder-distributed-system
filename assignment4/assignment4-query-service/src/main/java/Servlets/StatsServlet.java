@@ -1,37 +1,33 @@
 package Servlets;
 
 import Constants.Constant;
-import ConnectionManagers.DynamoDBConnectionManager;
+import ConnectionManagers.AuroraPostgresqlConnectionManager;
 import Models.Stats;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import java.util.HashMap;
+import java.sql.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+import javax.servlet.annotation.*;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
-
-import javax.servlet.ServletException;
-import javax.servlet.annotation.*;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.util.Map;
 
 @WebServlet(name = "StatsServlet", value = "/StatsServlet")
 public class StatsServlet extends HttpServlet {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(StatsServlet.class);
-  private AmazonDynamoDB dynamoDbClient;
+  private Connection connection;
 
   public void init() throws ServletException {
     super.init();
-    dynamoDbClient = DynamoDBConnectionManager.getClient();
+    try {
+      connection = AuroraPostgresqlConnectionManager.getConnection();
+    } catch (SQLException e) {
+      LOGGER.warn(e.toString());
+    }
   }
 
   @Override
-  protected void doGet(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     response.setContentType(Constant.CONTENT_TYPE);
     String urlPath = request.getPathInfo();  //urlPath "/{userID}"
     if (!isValidUrlPath(urlPath)) {
@@ -48,36 +44,23 @@ public class StatsServlet extends HttpServlet {
     // request url validation completed
     int userId = Integer.parseInt(urlParts[1]);
     try {
-      Map<String, AttributeValue> key = new HashMap<>();
-      key.put("userid", new AttributeValue().withN(String.valueOf(userId)));
-
-      GetItemRequest getItemRequest = new GetItemRequest()
-          .withTableName("user_data_denormalized")
-          .withKey(key);
-
-      Map<String, AttributeValue> returnedItem = dynamoDbClient.getItem(getItemRequest).getItem();
-
-      if (returnedItem != null) {
-        AttributeValue numLikesValue = returnedItem.get("num_likes");
-        AttributeValue numDislikesValue = returnedItem.get("num_dislikes");
-
-        if (numLikesValue != null && numDislikesValue != null) {
-          int numLikes = Integer.parseInt(numLikesValue.getN());
-          int numDislikes = Integer.parseInt(numDislikesValue.getN());
-          Stats stats = new Stats(numLikes, numDislikes);
-          LOGGER.info("User stats for user " + userId + ": " + stats);
-          response.setContentType("text/plain");
-          response.setStatus(HttpServletResponse.SC_OK);
-          response.getWriter().write("User stats for user " + userId + ": " + stats);
-        } else {
-          response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-          response.getWriter().write(Constant.USER_NOT_FOUND);
-        }
+      String queryString = "SELECT num_likes, num_dislikes FROM users.user_data WHERE userid = ?";
+      PreparedStatement stmt = connection.prepareStatement(queryString);
+      stmt.setInt(1, userId);
+      ResultSet rs = stmt.executeQuery();
+      if (rs.next()) {
+        int numLike = rs.getInt("num_likes");
+        int numDislike = rs.getInt("num_dislikes");
+        Stats stats = new Stats(numLike, numDislike);
+        LOGGER.info("User stats for user " + userId + ": " + stats);
+        response.setContentType("text/plain");
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.getWriter().write("User stats for user " + userId + ": " + stats);
       } else {
         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         response.getWriter().write(Constant.USER_NOT_FOUND);
       }
-    } catch (Exception e) {
+    } catch (SQLException e) {
       LOGGER.warn(e.toString());
       response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Constant.DB_ERROR);
     }

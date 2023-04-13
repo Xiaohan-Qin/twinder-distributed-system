@@ -1,33 +1,33 @@
 package Servlets;
 
 import Constants.Constant;
-import ConnectionManagers.DynamoDBConnectionManager;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
-import java.util.stream.Collectors;
+import ConnectionManagers.AuroraPostgresqlConnectionManager;
+
+import java.sql.*;
+import java.util.Arrays;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import javax.servlet.ServletException;
 import javax.servlet.annotation.*;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
 
 @WebServlet(name = "MatchesServlet", value = "/MatchesServlet")
 public class MatchesServlet extends HttpServlet {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MatchesServlet.class);
-  private AmazonDynamoDB dynamoDbClient;
+  private Connection connection;
 
   public void init() throws ServletException {
     super.init();
-    dynamoDbClient = DynamoDBConnectionManager.getClient();
+    try {
+      connection = AuroraPostgresqlConnectionManager.getConnection();
+    } catch (SQLException e) {
+      LOGGER.warn(e.toString());
+    }
   }
 
   @Override
@@ -48,38 +48,23 @@ public class MatchesServlet extends HttpServlet {
     }
     // request url validation completed
     int userId = Integer.parseInt(urlParts[1]);
-
     try {
-      Map<String, AttributeValue> key = new HashMap<>();
-      key.put("userid", new AttributeValue().withN(String.valueOf(userId)));
-
-      GetItemRequest getItemRequest = new GetItemRequest()
-          .withTableName("user_data_denormalized")
-          .withKey(key);
-
-      Map<String, AttributeValue> returnedItem = dynamoDbClient.getItem(getItemRequest).getItem();
-
-      if (returnedItem != null) {
-        AttributeValue matchedUsersValue = returnedItem.get("matched_users");
-        if (matchedUsersValue != null) {
-          List<Integer> matchedUsers = matchedUsersValue.getNS().stream()
-              .map(Integer::parseInt)
-              .collect(Collectors.toList());
-          LOGGER.info("Matched users for user " + userId + ": " + matchedUsers);
-          response.setContentType("text/plain");
-          response.setStatus(HttpServletResponse.SC_OK);
-          response.getWriter().write("Matched users for user " + userId + ": " + matchedUsers);
-        } else {
-          LOGGER.info("No matched users for user " + userId);
-          response.setContentType("text/plain");
-          response.setStatus(HttpServletResponse.SC_OK);
-          response.getWriter().write("No matched users for user " + userId);
-        }
+      String queryString = "SELECT matched_users FROM users.user_data WHERE userid = ?";
+      PreparedStatement stmt = connection.prepareStatement(queryString);
+      stmt.setInt(1, userId);
+      ResultSet rs = stmt.executeQuery();
+      if (rs.next()) {
+        Array matchedUsersArray = rs.getArray("matched_users");
+        String matchedUsersString = Arrays.toString((Object[]) matchedUsersArray.getArray());
+        LOGGER.info("Matched users for user " + userId + ": " + matchedUsersString);
+        response.setContentType("text/plain");
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.getWriter().write("Matched users for user " + userId + ": " + matchedUsersString);
       } else {
         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         response.getWriter().write(Constant.USER_NOT_FOUND);
       }
-    } catch (Exception e) {
+    } catch (SQLException e) {
       LOGGER.warn(e.toString());
       response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Constant.DB_ERROR);
     }
